@@ -62,6 +62,8 @@ unsigned long PREV_TIME = 0; // keeps track of time in milliseconds of when an e
 
 int CURR_DISPLAY_BRIGHT = 7; // what the displays brightness is currently set to (0-7)
 
+bool ALARM_ARMED = false;
+
 int ALARM_HOUR = 6; // alarms set hour (24-hour format)
 int ALARM_MINUTE = 15; // alarms set minute
 
@@ -109,7 +111,7 @@ void loop() {
   int now_hour = now.hour(); 
   int now_minute = now.minute();
   // if it is the alarms set time and the alarm is armed, buzz the alarm
-  if(now_hour == ALARM_HOUR && now_minute == ALARM_MINUTE && now.second() < 8) { 
+  if(now_hour == ALARM_HOUR && now_minute == ALARM_MINUTE && now.second() < 8 && ALARM_ARMED) { 
     BUZZ = true;
   }
   
@@ -131,11 +133,7 @@ void loop() {
       R_PUSHED = true;
     }
   } else if(R_PUSHED) { // the button has only been pressed 
-    if(scale.get_units() > -1*SCALE_MARGIN) { // if the weight is at 0 or lighter the alarm is not set
-      displayAlarmStatus(false);
-    } else { // else the weight is higher than 0 and that means that the alarm should be ready to go off
-      displayAlarmStatus(true);
-  }
+    displayAlarmStatus();
     R_PUSHED = false;
   }
 
@@ -177,6 +175,12 @@ void loop() {
   } else { // display the time in 12-hour format
     displayCurrTime(now_hour, now_minute);
   }
+
+  if(scale.get_units() > -1*SCALE_MARGIN) { // if the weight is at 0 or lighter the alarm is not set
+    ALARM_ARMED = false;
+  } else { // else the weight is higher than 0 and that means that the alarm should be ready to go off
+    ALARM_ARMED = true;
+  }
 }
 
 
@@ -198,8 +202,8 @@ void displayCurrTime(int now_hour, int now_minute) {
 }
 
 // Display if the alarm is ready to go off or not, denoted by global boolean ALARM_ARMED
-void displayAlarmStatus(bool alarm_on) {
-  if(alarm_on) {
+void displayAlarmStatus() {
+  if(ALARM_ARMED) {
     display.clear();
     display.setSegments(on, 2, 2);
   } else {
